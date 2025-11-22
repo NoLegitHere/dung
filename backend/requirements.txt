@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.10
+pydantic[email]
+pydantic-settings
+python-dotenv
+mypy
+alembic>=1.13.0
+email-validator
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==3.2.2
+python-multipart
