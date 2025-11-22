@@ -1,5 +1,8 @@
 import logging
+import random
+import string
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from app.db.session import SessionLocal
 from app.models.user import User, UserRole
 from app.models.class_model import Class
@@ -10,15 +13,22 @@ from datetime import datetime, timedelta
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def generate_class_code() -> str:
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
 def init_db(db: Session) -> None:
     # Create default class if it doesn't exist
     default_class = db.query(Class).filter(Class.id == 1).first()
     if not default_class:
         default_class = Class(
             id=1,
-            name="Lớp Mặc Định"
+            name="Lớp Mặc Định",
+            class_code="DEFAULT" # Static code for default class
         )
         db.add(default_class)
+        db.commit()
+        # Sync the sequence since we inserted with explicit ID
+        db.execute(text("SELECT setval('class_id_seq', (SELECT MAX(id) FROM class))"))
         db.commit()
         logger.info("Created default class")
 
@@ -77,7 +87,11 @@ def init_db(db: Session) -> None:
         if existing_class:
             # Update image_url if class exists
             existing_class.image_url = class_data.get("image_url")
+            if not existing_class.class_code:
+                 existing_class.class_code = generate_class_code()
+                 db.add(existing_class)
         else:
+            class_data["class_code"] = generate_class_code()
             new_class = Class(**class_data)
             db.add(new_class)
     
